@@ -197,7 +197,7 @@
     overflow-x: auto;
   }
 
-  canvas { display: block; max-width: 100%; }
+  canvas { display: block; width: 100%; height: auto; }
 
   .legend-row {
     display: flex;
@@ -386,8 +386,9 @@ function generate() {
   // Collect rows: each word = one "block" of rows per char-byte
   // Layout: words wrap to multiple lines
   const PAD = 40;
-  const maxWidth = 900;
-  const innerW = maxWidth - PAD * 2;
+  const canvasWrap = document.getElementById('canvas-wrap');
+  const containerW = canvasWrap.clientWidth - 64; // subtract wrap padding
+  const innerW = containerW - PAD * 2;
 
   // Pre-calculate word widths
   function wordPixelWidth(word) {
@@ -422,10 +423,10 @@ function generate() {
   const footerH = showText ? 48 : 0;
 
   const canvasH = PAD + headerH + lines.length * lineSpacing + legendH + footerH + PAD;
-  const canvasW = Math.min(maxWidth, PAD * 2 + lines.reduce((mx, ln) => {
+  const canvasW = PAD * 2 + lines.reduce((mx, ln) => {
     let lw = ln.reduce((s, w, i) => s + wordPixelWidth(w) + (i > 0 ? wordGap : 0), 0);
     return Math.max(mx, lw);
-  }, 0));
+  }, 0);
 
   const cv = document.getElementById('cv');
   cv.width = canvasW;
