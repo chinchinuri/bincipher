@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бінарний шифр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Unbounded:wght@300;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #161618;
+    --border: #2a2a2e;
+    --accent: #c9a84c;
+    --accent-dim: #7a6229;
+    --text: #e8e3d6;
+    --muted: #6b6760;
+    --bit-on: #c9a84c;
+    --bit-off: #252528;
+    --bit-size: 14px;
+    --bit-gap: 3px;
+    --byte-gap: 10px;
+    --word-gap: 22px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 700;
+    font-size: clamp(22px, 4vw, 38px);
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 760px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent-dim);
+  }
+
+  .options {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .opt-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .opt-label input { accent-color: var(--accent); cursor: pointer; }
+
+  .sep-label {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .btn {
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: rgba(201,168,76,0.08); border-color: var(--accent); }
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e0f;
+    font-weight: 700;
+  }
+  .btn-primary:hover { background: #d4b060; border-color: #d4b060; }
+
+  #preview-wrap {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .preview-title {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .preview-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  #canvas-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 32px;
+    overflow-x: auto;
+  }
+
+  canvas { display: block; max-width: 100%; }
+
+  .legend-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-bit {
+    width: 16px;
+    height: 8px;
+    border-radius: 1px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #0e0e0f;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    padding: 12px 24px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 500px) {
+    .card { padding: 18px; }
+    #canvas-wrap { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Бінарний шифр</h1>
+  <div class="subtitle">Текст → двійковий код → візуальний патерн</div>
+</header>
+
+<div class="card">
+  <label for="txt">Текст для шифрування</label>
+  <div class="input-row">
+    <input type="text" id="txt" placeholder="Стійкість, надійність, безпека" maxlength="120">
+    <button class="btn btn-primary" onclick="generate()">Згенерувати</button>
+  </div>
+
+  <div class="options">
+    <label class="opt-label">
+      <input type="checkbox" id="show-text" checked onchange="generate()">
+      Показувати текст під патерном
+    </label>
+    <label class="opt-label">
+      <input type="checkbox" id="show-legend" checked onchange="generate()">
+      Легенда
+    </label>
+    <label class="opt-label">
+      <input type="checkbox" id="show-bytes" onchange="generate()">
+      HEX-значення
+    </label>
+  </div>
+
+  <div class="options">
+    <span class="sep-label">
+      Розмір біта:
+      <select id="bit-size" onchange="generate()">
+        <option value="10">малий (10px)</option>
+        <option value="14" selected>середній (14px)</option>
+        <option value="20">великий (20px)</option>
+      </select>
+    </span>
+    <span class="sep-label">
+      Тема:
+      <select id="theme" onchange="generate()">
+        <option value="dark">темна (золото)</option>
+        <option value="light">світла (сталь)</option>
+        <option value="metal">метал</option>
+      </select>
+    </span>
+  </div>
+</div>
+
+<div class="card" id="preview-wrap">
+  <div class="preview-header">
+    <span class="preview-title">Результат</span>
+    <div class="preview-actions">
+      <button class="btn" onclick="copyImage()">Копіювати PNG</button>
+      <button class="btn" onclick="downloadImage()">Зберегти PNG</button>
+      <button class="btn" onclick="copyBinary()">Копіювати двійковий</button>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="cv"></canvas>
+  </div>
+  <div class="legend-row">
+    <div class="legend-item">
+      <div class="legend-bit" id="leg1" style="background:#c9a84c"></div>
+      <span>1 — заповнена лінія</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-bit" id="leg0" style="border:1px solid #2a2a2e;background:transparent"></div>
+      <span>0 — порожній пропуск</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const THEMES = {
+  dark: {
+    bg: '#0e0e0f',
+    surface: '#161618',
+    border: '#2a2a2e',
+    bit1: '#c9a84c',
+    bit0: '#1e1e21',
+    text: '#e8e3d6',
+    muted: '#6b6760',
+    leg1bg: '#c9a84c',
+    leg0border: '#2a2a2e'
+  },
+  light: {
+    bg: '#f4f4f2',
+    surface: '#ffffff',
+    border: '#d0d0cc',
+    bit1: '#2c3e50',
+    bit0: '#e8e8e4',
+    text: '#1a1a1a',
+    muted: '#888880',
+    leg1bg: '#2c3e50',
+    leg0border: '#c0c0bc'
+  },
+  metal: {
+    bg: '#c8cdd4',
+    surface: '#d8dde4',
+    border: '#b0b5bc',
+    bit1: '#3a3a40',
+    bit0: '#c0c5cc',
+    text: '#1a1a1e',
+    muted: '#6a6a72',
+    leg1bg: '#3a3a40',
+    leg0border: '#9a9fa6'
+  }
+};
+
+let lastBinaryStr = '';
+
+function getBytes(str) {
+  return Array.from(new TextEncoder().encode(str));
+}
+
+function generate() {
+  const txt = document.getElementById('txt').value.trim();
+  if (!txt) return;
+
+  const themeKey = document.getElementById('theme').value;
+  const T = THEMES[themeKey];
+  const bitSize = parseInt(document.getElementById('bit-size').value);
+  const showText = document.getElementById('show-text').checked;
+  const showLegend = document.getElementById('show-legend').checked;
+  const showBytes = document.getElementById('show-bytes').checked;
+
+  const bitGap = Math.max(2, Math.round(bitSize * 0.22));
+  const byteGap = Math.max(6, Math.round(bitSize * 0.7));
+  const wordGap = Math.max(12, Math.round(bitSize * 1.5));
+  const bitH = Math.round(bitSize * 0.55);
+  const rowH = bitH + Math.round(bitH * 0.5);
+
+  // Parse words
+  const words = txt.split(/\s+/).filter(Boolean);
+
+  // Collect rows: each word = one "block" of rows per char-byte
+  // Layout: words wrap to multiple lines
+  const PAD = 40;
+  const maxWidth = 900;
+  const innerW = maxWidth - PAD * 2;
+
+  // Pre-calculate word widths
+  function wordPixelWidth(word) {
+    const bytes = getBytes(word);
+    return bytes.length * (8 * (bitSize + bitGap) - bitGap + byteGap) - byteGap;
+  }
+
+  // Build lines of words
+  const lines = [];
+  let curLine = [];
+  let curW = 0;
+
+  for (const word of words) {
+    const ww = wordPixelWidth(word);
+    const needed = curLine.length === 0 ? ww : ww + wordGap;
+    if (curLine.length > 0 && curW + needed > innerW) {
+      lines.push(curLine);
+      curLine = [word];
+      curW = ww;
+    } else {
+      curLine.push(word);
+      curW += needed;
+    }
+  }
+  if (curLine.length > 0) lines.push(curLine);
+
+  // Canvas dimensions
+  const lineH = rowH + (showBytes ? 14 : 0);
+  const lineSpacing = lineH + 18;
+  const headerH = 60;
+  const legendH = showLegend ? 36 : 0;
+  const footerH = showText ? 48 : 0;
+
+  const canvasH = PAD + headerH + lines.length * lineSpacing + legendH + footerH + PAD;
+  const canvasW = Math.min(maxWidth, PAD * 2 + lines.reduce((mx, ln) => {
+    let lw = ln.reduce((s, w, i) => s + wordPixelWidth(w) + (i > 0 ? wordGap : 0), 0);
+    return Math.max(mx, lw);
+  }, 0));
+
+  const cv = document.getElementById('cv');
+  cv.width = canvasW;
+  cv.height = canvasH;
+  const ctx = cv.getContext('2d');
+
+  ctx.fillStyle = T.bg;
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // Header line
+  ctx.strokeStyle = T.bit1;
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(PAD, PAD + 24);
+  ctx.lineTo(canvasW - PAD, PAD + 24);
+  ctx.stroke();
+
+  // Header text
+  ctx.fillStyle = T.bit1;
+  ctx.font = `bold 11px monospace`;
+  ctx.letterSpacing = '3px';
+  ctx.fillText('BINARY CIPHER', PAD, PAD + 16);
+
+  // Draw bits
+  let binaryStr = '';
+  let y = PAD + headerH;
+
+  for (const line of lines) {
+    let x = PAD;
+    for (const word of line) {
+      const bytes = getBytes(word);
+      for (let bi = 0; bi < bytes.length; bi++) {
+        const byte = bytes[bi];
+        const bits = byte.toString(2).padStart(8, '0');
+        binaryStr += bits + ' ';
+
+        for (let i = 0; i < 8; i++) {
+          const bx = x + i * (bitSize + bitGap);
+          if (bits[i] === '1') {
+            ctx.fillStyle = T.bit1;
+            ctx.beginPath();
+            ctx.roundRect(bx, y, bitSize, bitH, 1);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = T.bit0;
+            ctx.beginPath();
+            ctx.roundRect(bx, y, bitSize, bitH, 1);
+            ctx.fill();
+          }
+        }
+
+        if (showBytes) {
+          ctx.fillStyle = T.muted;
+          ctx.font = '9px monospace';
+          ctx.letterSpacing = '0px';
+          ctx.fillText('0x' + byte.toString(16).toUpperCase().padStart(2,'0'), x, y + bitH + 11);
+        }
+
+        x += 8 * (bitSize + bitGap) - bitGap + byteGap;
+      }
+      binaryStr = binaryStr.trimEnd() + ' | ';
+      x += wordGap - byteGap;
+    }
+    binaryStr = binaryStr.slice(0, -3) + '\n';
+    y += lineSpacing;
+  }
+
+  lastBinaryStr = binaryStr.trim();
+
+  // Legend
+  if (showLegend) {
+    const ly = y + 4;
+    ctx.fillStyle = T.bit1;
+    ctx.beginPath();
+    ctx.roundRect(PAD, ly, 16, 8, 1);
+    ctx.fill();
+    ctx.fillStyle = T.muted;
+    ctx.font = '11px monospace';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('= 1', PAD + 20, ly + 8);
+
+    ctx.fillStyle = T.bit0;
+    ctx.strokeStyle = T.border;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.roundRect(PAD + 80, ly, 16, 8, 1);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = T.muted;
+    ctx.fillText('= 0', PAD + 100, ly + 8);
+
+    // UTF-8 note
+    ctx.fillStyle = T.muted;
+    ctx.font = '10px monospace';
+    ctx.letterSpacing = '0px';
+    ctx.fillText('UTF-8 encoding', canvasW - PAD - 90, ly + 8);
+  }
+
+  // Source text
+  if (showText) {
+    const ty = canvasH - PAD - 18;
+    ctx.strokeStyle = T.border;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(PAD, ty - 12);
+    ctx.lineTo(canvasW - PAD, ty - 12);
+    ctx.stroke();
+    ctx.fillStyle = T.muted;
+    ctx.font = '12px monospace';
+    ctx.letterSpacing = '1px';
+    ctx.fillText(txt.length > 80 ? txt.slice(0, 77) + '...' : txt, PAD, ty + 4);
+  }
+
+  // Update legend UI
+  document.getElementById('leg1').style.background = T.bit1;
+  document.getElementById('leg0').style.border = `1px solid ${T.border}`;
+
+  document.getElementById('preview-wrap').style.display = 'flex';
+}
+
+async function copyImage() {
+  const cv = document.getElementById('cv');
+  try {
+    cv.toBlob(async blob => {
+      await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+      showToast('PNG скопійовано в буфер');
+    });
+  } catch(e) {
+    showToast('Не вдалося скопіювати — збережіть файл');
+  }
+}
+
+function downloadImage() {
+  const cv = document.getElementById('cv');
+  const txt = document.getElementById('txt').value.trim().slice(0, 30).replace(/\s+/g, '_').replace(/[^\wа-яА-ЯіІїЇєЄ_]/g, '');
+  const a = document.createElement('a');
+  a.href = cv.toDataURL('image/png');
+  a.download = `cipher_${txt || 'pattern'}.png`;
+  a.click();
+}
+
+function copyBinary() {
+  navigator.clipboard.writeText(lastBinaryStr).then(() => showToast('Двійковий код скопійовано'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('txt').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+
+// Demo on load
+window.addEventListener('load', () => {
+  document.getElementById('txt').value = 'Стійкість, надійність, безпека';
+  generate();
+});
+</script>
+</body>
+</html>
